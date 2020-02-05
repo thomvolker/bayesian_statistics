@@ -59,3 +59,13 @@ quantile(res[[2]][,1], probs = seq(.9,1, .01))
 ## of .05.
 
 ## I
+
+
+model.def <- jags.model(file = 'Exercise 1.I - Model.txt', data = dat, n.chains = 2)
+
+update(object = model.def, n.iter = 5000)
+
+par <- c('theta.PE', 'theta.PC', 'RR')
+res <- coda.samples(model = model.def, variable.names = par, n.iter = 500000)
+
+summary(res)
