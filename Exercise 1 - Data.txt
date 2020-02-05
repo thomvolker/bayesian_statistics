@@ -1,0 +1,4 @@
+dat <- list(y.PE = 58,
+						n.PE = 141,
+						y.PC = 40,
+					  n.PC = 143)
