@@ -1,0 +1,13 @@
+model{
+  
+  #density of the data
+  y.PE ~ dbin(theta.PE, n.PE)
+  y.PC ~ dbin(theta.PC, n.PC)
+  
+  #prior distribution
+  theta.PE ~ dbeta(1,1)
+  theta.PC ~ dbeta(1,1)
+  
+  #contrast (relative risk)
+  RR <- theta.PC/theta.PE
+}

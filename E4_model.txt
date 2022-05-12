@@ -1,0 +1,12 @@
+model{
+  for (i in 1:length(depr)) {
+    depr[i] ~ dbern(theta[i])
+    theta[i] <- 1 / (1 + exp(-(b[1] + b[2]*(gender[i]-mean(gender[])))))
+  }
+  
+  b[1] ~ dnorm(0, .00001)
+  b[2] ~ dnorm(0, .00001)
+  
+  OR[1] <- exp(b[2])
+  
+}

@@ -1,0 +1,25 @@
+model{
+  for (i in 1:length(attitude)) {
+    attitude[i] ~ dnorm(mu[i],tau)
+    mu[i] <- b[1]+b[2]*extra_c[i]+b[3]*agree_c[i]+b[4]*extra_c[i]*agree_c[i]
+    
+    extra_c[i] <- extraversion[i] - mean(extraversion[])
+    agree_c[i] <- agreeableness[i] - mean(agreeableness[])
+    
+    extraversion[i] ~ dnorm(mu.e,tau.e)
+    agreeableness[i] ~ dnorm(mu.a,tau.a)
+  }
+  
+  for (k in 1:4) {
+    b[k] ~ dnorm(0,.0001)
+  }
+    
+  sigma <- 1/sqrt(tau)
+  tau ~ dgamma(.0001,.0001)
+  mu.e ~ dnorm(0, .0001)
+  mu.a ~ dnorm(0, .0001)
+  tau.e ~ dgamma(.0001,.0001)
+  tau.a ~ dgamma(.0001,.0001)
+  
+  
+}

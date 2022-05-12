@@ -1,0 +1,20 @@
+model{
+  
+  for (i in 1:N[1]) {
+    depr[i] ~  dbern(theta[i])
+    theta[i] <- exp(reg[i]) / (1 + exp(reg[i]))
+    reg[i] <- (a + b[1] * gender[i] + b[2] * cidi1[i] + b[3] * depGP[i] + b[4] * antidep[i])
+  }
+  
+  a ~ dnorm(0, .00001)
+  b[1] ~ dnorm(0, .00001)
+  b[2] ~ dnorm(0, .00001)
+  b[3] ~ dnorm(0, .00001)
+  b[4] ~ dnorm(0, .00001)
+  
+  OR[1] <- exp(b[1])
+  OR[2] <- exp(b[2])
+  OR[3] <- exp(b[3])
+  OR[4] <- exp(b[4])
+  
+}

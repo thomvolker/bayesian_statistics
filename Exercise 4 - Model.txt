@@ -1,0 +1,13 @@
+model{
+  
+  for (i in 1:N[1]) {
+    depr[i] ~  dbern(theta[i])
+    theta[i] <- exp(a + b[1] * gender[i])/(1 + exp(a + b[1] * gender[i]))
+  }
+  
+  a ~ dnorm(0, .00001)
+  b[1] ~ dnorm(0, .00001)
+  
+  OR[1] <- exp(b[1])
+  
+}

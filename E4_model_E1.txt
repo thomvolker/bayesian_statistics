@@ -1,0 +1,11 @@
+model{
+  for (i in 1:length(depr)) {
+    depr[i] ~ dbern(theta[i])
+    theta[i] <- 1 / (1 + exp(-(b[1] + b[2]*(gender[i]-mean(gender[])) + b[3]*(age[i] - mean(age[])) + b[4]*(consults[i]-mean(consults[])) + b[5]*antidep[i])))
+  }
+  
+  for (k in 1:5) {
+    b[k] ~ dnorm(0, .00001)
+    OR[k] <- exp(b[k])
+  }
+}

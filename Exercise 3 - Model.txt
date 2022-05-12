@@ -1,0 +1,18 @@
+# Bayesian Statistics - Exercise 1 Model file
+
+# Cognitive behavioral therapy for PTSD: Is PE more effective than the baseline PC?
+
+model{
+
+# likelihood of the data
+y.PE ~ dbin(theta.PE, n.PE)
+y.PC ~ dbin(theta.PC, n.PC)
+
+# prior distributions
+theta.PE ~ dbeta(1,1)
+theta.PC ~ dbeta(1,1)
+
+# contrast
+RR <- theta.PC/theta.PE    
+
+}

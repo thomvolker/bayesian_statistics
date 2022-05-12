@@ -1,0 +1,13 @@
+model{
+  for (i in 1:length(attitude)) {
+    attitude[i] ~ dnorm(mu[i],tau)
+    mu[i] <- b[1]+b[2]*extraversion[i]+b[3]*agreeableness[i]
+  }
+  
+  for (k in 1:3) {
+    b[k] ~ dnorm(0,.0001)
+  }
+    
+  sigma <- 1/sqrt(tau)
+  tau ~ dgamma(.0001,.0001)
+}

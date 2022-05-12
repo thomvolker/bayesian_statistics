@@ -1,0 +1,150 @@
+---
+title: "The posterior predictive check"
+subtitle: "A Bayesian *p*-value?!"
+author: "Thom Volker"
+date: "`r format(Sys.time(), '%d-%m-%Y')`"
+output: 
+  ioslides_presentation:
+    logo: uu_logo.png
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+```
+
+```{r,include=F, cache = TRUE}
+source("~/Documents/MSBBSS/Semester 2/Bayesian Statistics/bayesian_statistics/ThomVolkerRCode.R")
+```
+
+## Data and prior
+
+How similar is the data at hand to some prior distribution?
+
+```{r, out.width = "80%"}
+d1 <- rnorm(100000)
+d2 <- rnorm(100000, sd = 0.2)
+
+bind_rows(data.frame(data = d1), 
+          data.frame(data = d2), .id = "Group") %>%
+  mutate(Group = recode_factor(Group, `1` = "Prior", `2` = "Data")) %>%
+  ggplot(aes(x = data, fill = Group)) +
+  geom_density(alpha = 0.7) +
+  theme_minimal() +
+  labs(x = "Sampled values", y = "Density") +
+  scale_fill_brewer(palette = "Set2")
+```
+
+## The prior predictive check
+
+Although the plot says quite a lot, we could also numerically assess whether the actual data is in accordance with the prior. We do so by 
+
+1. sampling $m = 1, \dots, M$ times $n$ values from the prior distribution, with $n$ the sample size of the data at hand,
+
+2. come up with a (maybe the variance?) test statistic $T$, 
+
+3. calculate how often $T^{1:M}_{sim}$ is more extreme than $T^{obs}$. That is, we calculate
+$$
+Pr(Var(X^{m}) > Var(X^{obs}) | H_0),
+$$
+where $Var(X) = T(X)$ and $H_0$ indicates the prior distribution at hand.
+
+## On $p$-values
+
+<div style="float: left; width: 50%;">
+
+$p$ the probability of finding this, or a more extreme, value $T$, if the null hypothesis $H_0$ is true.
+
+</div>
+
+<div style="float: right; width: 45%;">
+
+![](https://teachdatascience.com/post/pvalues/xkcd_p.png){width=100%}
+
+</div>
+
+## The posterior predictive check
+
+The same idea: we want to assess whether the model at hand provides an adequate fit to the data
+
+$$
+Pr(T(X^{m}) > T(X^{obs}) | H_0, D).
+$$
+
+However, now we have actually fitted a model on the data $D$. 
+
+## Let's apply this
+
+<div style="float: left; width: 50%;">
+
+I wanted to know whether my estimated power output could be explained by the number of bike rides in four weeks prior to the activity at hand. 
+
+Loosely speaking, whether I performed better on my race bike when I biked more often in the four weeks before the activity. 
+
+</div>
+
+<div style="float: right; width: 45%;">
+
+![](me_on_a_bike.jpg){width=70%}
+</div>
+
+
+## Model
+
+Ordinary (Bayesian) regression model, with my estimated power output as the dependent variable, and the number of activities four weeks prior to the activity at hand, the speed of the specific ride and the distance of the specific ride.
+
+```{r, echo=F, fig.align="center"}
+reg_params <- out1$summary_out[,1:4]
+row.names(reg_params) <- c("Intercept", "Activities", "Speed", "Distance", "Residual Variance")
+colnames(reg_params) <- c("Estimate", "SE", "Lower bound", "Upper bound")
+
+kableExtra::kable(reg_params, digits=2, format = "latex", booktabs = TRUE) %>%
+  kableExtra::as_image(width = 6)
+
+```
+
+The regression coefficients are estimated using Gibbs sampling using uninformative conjugate priors (a normal prior distribution for the regression coefficients, and an inverse gamma prior for the variance). 
+
+## The test statistic I
+
+I wanted to know whether the residuals were actually normally distributed, and fortunately, the complete posterior distribution of the parameters was available. 
+
+So I could calculate the correlation between the ordered observed residuals (that is, $Y^{obs} - \textbf{X}^{obs}\beta^m$) and the (ordered) theoretical quantiles of the standard normal distribution function using samples of the posterior distribution of the parameters.
+
+## The test statistic II
+
+Basically, this is the correlation between the ordered observed residuals, and values that exactly follow a normal distribution (note that these are not sampled).
+
+So, if the residuals are perfectly normally distributed, one would obtain a correlation $\rho = 1$.
+
+## But does the model fit?
+
+For all iterations of the Gibbs sampler, I have a sampled regression coefficients, and a sampled variance estimate. 
+
+Using the sampled values, I can simulate $Y^m$ values from a $\mathcal{N}{(X_i\beta^m, \sigma^{2,m})}$ distribution. As such, these residuals are normally distributed by definition. 
+
+Additionally, I can calculate the observed residuals using the observed $X$ and $Y$ values and the sampled regression coefficients ($Y - X\beta^m$).
+
+The next step is to calculate 
+$$
+Pr(-\rho_{m} | [Y^m, X, \beta^m, \sigma^{2, m}] > -\rho_{obs} | [Y, X, \beta^m, \sigma^{2,m}], H_0, D).
+$$
+
+## The model fits
+
+$Pr(-\rho_{m} | [\dots] > -\rho_{obs} | [\dots], H_0, D) = 0.48,$ so 48% of the time, the ordered simulated (normal) residuals had a smaller correlation with the theoretical quantiles than the ordered observed residuals. 
+
+```{r, out.width = "65%"}
+sim_cor <- apply(sim_res, 2, function(x) cor(qnorm(ppoints(x)), sort(x)))
+obs_cor <- apply(obs_res, 2, function(x) cor(qnorm(ppoints(x)), sort(x)))
+
+bind_rows(Simulated = data.frame(Correlation = sim_cor),
+          Observed  = data.frame(Correlation = obs_cor),
+          .id = "Group") %>%
+  ggplot(aes(x = Correlation, fill = Group)) +
+  geom_density(alpha = 0.7) +
+  theme_minimal() +
+  labs(x = "Sampled values", y = "Density") +
+  scale_fill_brewer(palette = "Set2")
+
+```
